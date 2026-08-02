@@ -1,5 +1,7 @@
 import { Body, Controller, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { RolesGuard } from '../auth/guards/roles.guard';
+import { Roles } from '../auth/decorators/roles.decorator';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { TransmissionsService } from './transmissions.service';
 import { CreateTransmissionDto } from './dto/create-transmission.dto';
@@ -11,7 +13,7 @@ interface AuthUser {
   role: string;
 }
 
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('transmissions')
 export class TransmissionsController {
   constructor(private transmissionsService: TransmissionsService) {}
@@ -32,11 +34,8 @@ export class TransmissionsController {
   }
 
   @Patch(':id')
-  update(
-    @Param('id') id: string,
-    @CurrentUser() user: AuthUser,
-    @Body() dto: UpdateTransmissionDto,
-  ) {
-    return this.transmissionsService.update(id, user, dto);
+  @Roles('OFFICER')
+  update(@Param('id') id: string, @Body() dto: UpdateTransmissionDto) {
+    return this.transmissionsService.update(id, dto);
   }
 }
