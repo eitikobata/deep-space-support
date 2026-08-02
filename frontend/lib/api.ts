@@ -29,6 +29,7 @@ export interface Transmission {
   id: string;
   subject: string;
   description: string;
+  notifyEmail?: string | null;
   alertLevel: AlertLevel;
   status: TransmissionStatus;
   senderId: string;
@@ -155,10 +156,13 @@ export const Api = {
     });
   },
 
-  async updateTransmissionStatus(id: string, status: TransmissionStatus) {
+  async updateTransmission(
+    id: string,
+    patch: Partial<{ alertLevel: AlertLevel; status: TransmissionStatus; tagNames: string[] }>
+  ) {
     return request<Transmission>(`/transmissions/${id}`, {
       method: 'PATCH',
-      body: JSON.stringify({ status }),
+      body: JSON.stringify(patch),
     });
   },
 };
