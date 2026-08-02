@@ -46,6 +46,7 @@ model Transmission {
   id          String             @id @default(uuid())
   subject     String
   description String
+  notifyEmail String?
   alertLevel  AlertLevel         @default(BLUE_ALERT)
   status      TransmissionStatus @default(ACTIVE)
   senderId    String
