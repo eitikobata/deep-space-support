@@ -126,7 +126,31 @@ button.ghost {
   font-size: 10px;
 }
 
+button.demo-login {
+  background: transparent;
+  color: var(--text-dim);
+  border: 1px dashed var(--border);
+  margin-top: 10px;
+  padding: 8px 14px;
+  font-size: 10px;
+  width: 100%;
+}
+button.demo-login:hover { color: var(--text); border-color: var(--text-dim); }
+
 button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.portal-switch-link {
+  display: block;
+  margin-top: 18px;
+  text-align: center;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  text-decoration: none;
+}
+.portal-switch-link:hover { color: var(--cyan); }
 
 .error-text {
   color: var(--red);
