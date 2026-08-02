@@ -8,7 +8,6 @@
   --text-dim: #6b7787;
   --cyan: #4fd1c5;
   --amber: #ffb347;
-  --green: #4ade80;
   --yellow: #fbbf24;
   --red: #f87171;
   --mono: 'JetBrains Mono', monospace;
@@ -156,7 +155,7 @@ button:disabled { opacity: 0.5; cursor: not-allowed; }
 .signal span:nth-child(3) { height: 11px; animation-delay: 0.3s; }
 .signal span:nth-child(4) { height: 14px; animation-delay: 0.45s; }
 
-.signal.green_alert span { background: var(--green); }
+.signal.blue_alert span { background: var(--cyan); }
 .signal.yellow_alert span:nth-child(-n+3) { background: var(--yellow); }
 .signal.yellow_alert span:nth-child(4) { background: var(--border); }
 .signal.red_alert span:nth-child(1) { background: var(--red); }

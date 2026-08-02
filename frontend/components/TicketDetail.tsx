@@ -1,19 +1,17 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { Api, Transmission, LogEntry, TransmissionStatus } from '@/lib/directus';
+import { Api, Transmission, TransmissionStatus } from '@/lib/api';
 
 export function TicketDetail({ id, onBack }: { id: string; onBack: () => void }) {
   const [transmission, setTransmission] = useState<Transmission | null>(null);
-  const [entries, setEntries] = useState<LogEntry[]>([]);
   const [responseBody, setResponseBody] = useState('');
   const [loading, setLoading] = useState(true);
 
   const load = useCallback(async () => {
     setLoading(true);
-    const [t, e] = await Promise.all([Api.getTransmission(id), Api.getLogEntries(id)]);
+    const t = await Api.getTransmission(id);
     setTransmission(t);
-    setEntries(e);
     setLoading(false);
   }, [id]);
 
@@ -42,14 +40,15 @@ export function TicketDetail({ id, onBack }: { id: string; onBack: () => void })
     );
   }
 
-  const tags = (transmission.tags || []).map((t) => t.tags_id?.name).filter(Boolean).join(', ');
+  const entries = transmission.logEntries || [];
+  const tags = (transmission.tags || []).map((t) => t.name).join(', ');
 
   return (
     <div className="panel">
       <a href="#" className="back-link" onClick={(e) => { e.preventDefault(); onBack(); }}>&larr; Back</a>
 
       <p className="ticket-meta" style={{ marginTop: 16 }}>
-        FROM: {transmission.sender?.email || 'unknown'} · {new Date(transmission.date_created).toLocaleString()}
+        FROM: {transmission.sender?.email || 'unknown'} · {new Date(transmission.createdAt).toLocaleString()}
       </p>
       <h2 style={{ color: 'var(--text)', fontSize: 16, textTransform: 'none', letterSpacing: 0, marginTop: 4 }}>
         {transmission.subject}
@@ -62,7 +61,7 @@ export function TicketDetail({ id, onBack }: { id: string; onBack: () => void })
           entries.map((e) => (
             <div key={e.id} style={{ marginBottom: 14 }}>
               <p className="ticket-meta">
-                {e.officer?.email || 'officer'} · {new Date(e.date_created).toLocaleString()}
+                {e.officer?.email || 'officer'} · {new Date(e.createdAt).toLocaleString()}
               </p>
               <p style={{ lineHeight: 1.5 }}>{e.body}</p>
             </div>
@@ -87,9 +86,9 @@ export function TicketDetail({ id, onBack }: { id: string; onBack: () => void })
         value={transmission.status}
         onChange={(e) => handleStatusChange(e.target.value as TransmissionStatus)}
       >
-        <option value="active">Active</option>
-        <option value="under_review">Under Review</option>
-        <option value="resolved">Resolved</option>
+        <option value="ACTIVE">Active</option>
+        <option value="UNDER_REVIEW">Under Review</option>
+        <option value="RESOLVED">Resolved</option>
       </select>
     </div>
   );

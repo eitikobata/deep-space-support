@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useCallback, useEffect } from 'react';
-import { Api } from '@/lib/directus';
+import { Api } from '@/lib/api';
 
 export function useAuth() {
   const [loggedIn, setLoggedIn] = useState(false);

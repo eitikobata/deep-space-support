@@ -1,4 +1,4 @@
-import { Transmission } from '@/lib/directus';
+import { Transmission } from '@/lib/api';
 import { SignalIndicator } from './SignalIndicator';
 
 export function TicketList({
@@ -27,12 +27,12 @@ export function TicketList({
             <div className="ticket-subject">{t.subject}</div>
             <div className="ticket-meta">
               {showSender && t.sender ? `${t.sender.email} · ` : ''}
-              {new Date(t.date_created).toLocaleDateString()}
+              {new Date(t.createdAt).toLocaleDateString()}
             </div>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <SignalIndicator level={t.alert_level || 'green_alert'} />
-            <span className="status-tag">{(t.status || 'unknown').replace('_', ' ')}</span>
+            <SignalIndicator level={t.alertLevel || 'BLUE_ALERT'} />
+            <span className="status-tag">{(t.status || 'UNKNOWN').replace('_', ' ')}</span>
           </div>
         </div>
       ))}
