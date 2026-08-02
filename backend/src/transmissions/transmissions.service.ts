@@ -12,6 +12,7 @@ export class TransmissionsService {
       data: {
         subject: dto.subject,
         description: dto.description,
+        notifyEmail: dto.notifyEmail || null,
         senderId: userId,
       },
     });
@@ -49,11 +50,7 @@ export class TransmissionsService {
     return transmission;
   }
 
-  async update(id: string, user: { id: string; role: string }, dto: UpdateTransmissionDto) {
-    if (user.role !== 'OFFICER') {
-      throw new ForbiddenException('Only officers can update transmissions');
-    }
-
+  async update(id: string, dto: UpdateTransmissionDto) {
     const data: Record<string, unknown> = {};
     if (dto.alertLevel) data.alertLevel = dto.alertLevel;
     if (dto.status) data.status = dto.status;
