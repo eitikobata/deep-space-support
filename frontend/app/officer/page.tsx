@@ -5,15 +5,13 @@ import { useAuth } from '@/hooks/useAuth';
 import { Api, Transmission } from '@/lib/api';
 import { LoginForm } from '@/components/LoginForm';
 import { TicketList } from '@/components/TicketList';
+import { TicketDetail } from '@/components/TicketDetail';
 
-export default function CrewPortal() {
+export default function OfficerDeck() {
   const { loggedIn, ready, login, logout } = useAuth();
   const [tickets, setTickets] = useState<Transmission[]>([]);
-  const [subject, setSubject] = useState('');
-  const [description, setDescription] = useState('');
-  const [notifyEmail, setNotifyEmail] = useState('');
+  const [selectedId, setSelectedId] = useState<string | null>(null);
   const [error, setError] = useState('');
-  const [submitting, setSubmitting] = useState(false);
 
   const loadTickets = useCallback(async () => {
     try {
@@ -27,36 +25,12 @@ export default function CrewPortal() {
     if (loggedIn) loadTickets();
   }, [loggedIn, loadTickets]);
 
-  async function handleSubmit() {
-    setError('');
-    if (!subject.trim() || !description.trim()) {
-      setError('Subject and description are required.');
-      return;
-    }
-    setSubmitting(true);
-    try {
-      await Api.createTransmission({
-        subject: subject.trim(),
-        description: description.trim(),
-        notifyEmail: notifyEmail.trim(),
-      });
-      setSubject('');
-      setDescription('');
-      setNotifyEmail('');
-      loadTickets();
-    } catch {
-      setError('Could not send transmission. Try again.');
-    } finally {
-      setSubmitting(false);
-    }
-  }
-
   if (!ready) return null;
 
   return (
     <>
       <header className="station-header">
-        <h1>Deep Space <span>Support</span></h1>
+        <h1>Officer <span className="amber">Deck</span></h1>
         {loggedIn && (
           <button className="ghost" onClick={logout}>Sign Out</button>
         )}
@@ -64,45 +38,21 @@ export default function CrewPortal() {
 
       <main>
         {!loggedIn ? (
-          <LoginForm variant="crew" onLogin={login} />
+          <LoginForm variant="officer" onLogin={login} />
+        ) : selectedId ? (
+          <TicketDetail
+            id={selectedId}
+            onBack={() => {
+              setSelectedId(null);
+              loadTickets();
+            }}
+          />
         ) : (
-          <>
-            <div className="panel">
-              <h2>New Transmission</h2>
-              <label htmlFor="subject">Subject</label>
-              <input
-                id="subject"
-                type="text"
-                placeholder="Brief summary of the issue"
-                value={subject}
-                onChange={(e) => setSubject(e.target.value)}
-              />
-              <label htmlFor="description">Description</label>
-              <textarea
-                id="description"
-                placeholder="Describe what's happening in detail"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-              />
-              <label htmlFor="notifyEmail">Notify me at (optional)</label>
-              <input
-                id="notifyEmail"
-                type="email"
-                placeholder="you@email.com"
-                value={notifyEmail}
-                onChange={(e) => setNotifyEmail(e.target.value)}
-              />
-              <button className="primary" onClick={handleSubmit} disabled={submitting}>
-                {submitting ? 'Sending...' : 'Send Transmission'}
-              </button>
-              {error && <p className="error-text">{error}</p>}
-            </div>
-
-            <div className="panel">
-              <h2>Your Transmissions</h2>
-              <TicketList tickets={tickets} />
-            </div>
-          </>
+          <div className="panel">
+            <h2>All Transmissions</h2>
+            {error && <p className="error-text">{error}</p>}
+            <TicketList tickets={tickets} showSender onSelect={setSelectedId} />
+          </div>
         )}
       </main>
     </>

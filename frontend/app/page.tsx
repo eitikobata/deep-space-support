@@ -5,10 +5,12 @@ import { useAuth } from '@/hooks/useAuth';
 import { Api, Transmission } from '@/lib/api';
 import { LoginForm } from '@/components/LoginForm';
 import { TicketList } from '@/components/TicketList';
+import { CrewTicketDetail } from '@/components/CrewTicketDetail';
 
 export default function CrewPortal() {
   const { loggedIn, ready, login, logout } = useAuth();
   const [tickets, setTickets] = useState<Transmission[]>([]);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
   const [subject, setSubject] = useState('');
   const [description, setDescription] = useState('');
   const [notifyEmail, setNotifyEmail] = useState('');
@@ -17,7 +19,7 @@ export default function CrewPortal() {
 
   const loadTickets = useCallback(async () => {
     try {
-      setTickets(await Api.listMyTransmissions());
+      setTickets(await Api.listTransmissions());
     } catch {
       setError('Could not load transmissions.');
     }
@@ -65,6 +67,14 @@ export default function CrewPortal() {
       <main>
         {!loggedIn ? (
           <LoginForm variant="crew" onLogin={login} />
+        ) : selectedId ? (
+          <CrewTicketDetail
+            id={selectedId}
+            onBack={() => {
+              setSelectedId(null);
+              loadTickets();
+            }}
+          />
         ) : (
           <>
             <div className="panel">
@@ -100,7 +110,7 @@ export default function CrewPortal() {
 
             <div className="panel">
               <h2>Your Transmissions</h2>
-              <TicketList tickets={tickets} />
+              <TicketList tickets={tickets} onSelect={setSelectedId} />
             </div>
           </>
         )}
