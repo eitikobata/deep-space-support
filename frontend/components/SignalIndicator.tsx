@@ -7,12 +7,5 @@ const LEVEL_CLASS: Record<AlertLevel, string> = {
 };
 
 export function SignalIndicator({ level }: { level: AlertLevel }) {
-  return (
-    <span className={`signal ${LEVEL_CLASS[level]}`}>
-      <span></span>
-      <span></span>
-      <span></span>
-      <span></span>
-    </span>
-  );
+  return <span className={`signal-rect ${LEVEL_CLASS[level]}`} />;
 }

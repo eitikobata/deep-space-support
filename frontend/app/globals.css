@@ -159,39 +159,25 @@ button:disabled { opacity: 0.5; cursor: not-allowed; }
   margin-top: 12px;
 }
 
-.signal {
-  display: inline-flex;
-  align-items: flex-end;
-  gap: 2px;
+.signal-rect {
+  display: inline-block;
+  width: 16px;
   height: 14px;
+  border-radius: 2px;
   vertical-align: middle;
 }
 
-.signal span {
-  width: 3px;
-  background: var(--border);
-  border-radius: 1px;
-  animation: pulse 1.4s ease-in-out infinite;
-}
+.signal-rect.blue_alert   { background: var(--cyan);   animation: pulse-rect 3s ease-in-out infinite; }
+.signal-rect.yellow_alert { background: var(--yellow); animation: pulse-rect 1.8s ease-in-out infinite; }
+.signal-rect.red_alert    { background: var(--red);    animation: pulse-rect 0.9s ease-in-out infinite; }
 
-.signal span:nth-child(1) { height: 5px; }
-.signal span:nth-child(2) { height: 8px; animation-delay: 0.15s; }
-.signal span:nth-child(3) { height: 11px; animation-delay: 0.3s; }
-.signal span:nth-child(4) { height: 14px; animation-delay: 0.45s; }
-
-.signal.blue_alert span { background: var(--cyan); }
-.signal.yellow_alert span:nth-child(-n+3) { background: var(--yellow); }
-.signal.yellow_alert span:nth-child(4) { background: var(--border); }
-.signal.red_alert span:nth-child(1) { background: var(--red); }
-.signal.red_alert span:nth-child(n+2) { background: var(--border); }
-
-@keyframes pulse {
-  0%, 100% { opacity: 0.5; }
+@keyframes pulse-rect {
+  0%, 100% { opacity: 0.55; }
   50% { opacity: 1; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .signal span { animation: none; opacity: 1; }
+  .signal-rect { animation: none; opacity: 1; }
 }
 
 .ticket {
@@ -264,9 +250,9 @@ main:has(.detail-grid) { max-width: 1000px; }
   letter-spacing: 0.12em;
   text-transform: uppercase;
 }
-.alert-banner.blue   { background: rgba(79, 209, 197, 0.15); color: var(--cyan); border: 1px solid var(--cyan); }
-.alert-banner.yellow { background: rgba(251, 191, 36, 0.15); color: var(--yellow); border: 1px solid var(--yellow); }
-.alert-banner.red    { background: rgba(248, 113, 113, 0.18); color: var(--red); border: 1px solid var(--red); animation: pulse-banner 1s ease-in-out infinite; }
+.alert-banner.blue   { background: rgba(79, 209, 197, 0.15); color: var(--cyan); border: 1px solid var(--cyan); animation: pulse-banner 3s ease-in-out infinite; }
+.alert-banner.yellow { background: rgba(251, 191, 36, 0.15); color: var(--yellow); border: 1px solid var(--yellow); animation: pulse-banner 1.8s ease-in-out infinite; }
+.alert-banner.red    { background: rgba(248, 113, 113, 0.18); color: var(--red); border: 1px solid var(--red); animation: pulse-banner 0.9s ease-in-out infinite; }
 
 @keyframes pulse-banner {
   0%, 100% { opacity: 1; }
@@ -299,7 +285,17 @@ main:has(.detail-grid) { max-width: 1000px; }
   .detail-grid { grid-template-columns: 1fr; }
 }
 
-.sidebar { display: flex; flex-direction: column; gap: 20px; }
+.sidebar { display: flex; flex-direction: column; gap: 12px; }
+.sidebar-panel { display: flex; flex-direction: column; gap: 20px; }
+
+.alert-banner-compact {
+  padding: 10px 14px;
+  font-size: 11px;
+}
+.alert-banner-compact .mute-toggle {
+  font-size: 13px;
+  padding: 3px 8px;
+}
 
 .sidebar-label {
   font-family: var(--mono);
@@ -362,3 +358,27 @@ main:has(.detail-grid) { max-width: 1000px; }
 .tag-add-row { display: flex; gap: 6px; }
 .tag-add-row input { margin: 0; flex: 1; padding: 8px; font-size: 12px; }
 .tag-add-row button { margin: 0; padding: 8px 12px; font-size: 10px; }
+
+/* ============================================
+   Officer Deck: 3-column kanban by status
+   ============================================ */
+
+main:has(.kanban-board) { max-width: 1100px; }
+
+.kanban-board {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+  align-items: start;
+}
+@media (max-width: 900px) {
+  .kanban-board { grid-template-columns: 1fr; }
+}
+
+.kanban-column { margin-bottom: 0; min-height: 120px; }
+
+.kanban-count {
+  color: var(--text-dim);
+  font-size: 11px;
+  margin-left: 6px;
+}

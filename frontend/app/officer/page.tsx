@@ -2,10 +2,30 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/hooks/useAuth';
-import { Api, Transmission } from '@/lib/api';
+import { Api, Transmission, AlertLevel, TransmissionStatus } from '@/lib/api';
 import { LoginForm } from '@/components/LoginForm';
 import { TicketList } from '@/components/TicketList';
 import { TicketDetail } from '@/components/TicketDetail';
+
+const URGENCY_ORDER: Record<AlertLevel, number> = {
+  RED_ALERT: 0,
+  YELLOW_ALERT: 1,
+  BLUE_ALERT: 2,
+};
+
+const COLUMNS: { status: TransmissionStatus; label: string }[] = [
+  { status: 'ACTIVE', label: 'Active' },
+  { status: 'UNDER_REVIEW', label: 'Under Review' },
+  { status: 'RESOLVED', label: 'Resolved' },
+];
+
+function sortByUrgency(tickets: Transmission[]) {
+  return [...tickets].sort((a, b) => {
+    const urgencyDiff = URGENCY_ORDER[a.alertLevel] - URGENCY_ORDER[b.alertLevel];
+    if (urgencyDiff !== 0) return urgencyDiff;
+    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+  });
+}
 
 export default function OfficerDeck() {
   const { loggedIn, ready, login, logout } = useAuth();
@@ -48,11 +68,20 @@ export default function OfficerDeck() {
             }}
           />
         ) : (
-          <div className="panel">
-            <h2>All Transmissions</h2>
+          <>
             {error && <p className="error-text">{error}</p>}
-            <TicketList tickets={tickets} showSender onSelect={setSelectedId} />
-          </div>
+            <div className="kanban-board">
+              {COLUMNS.map((col) => {
+                const columnTickets = sortByUrgency(tickets.filter((t) => t.status === col.status));
+                return (
+                  <div key={col.status} className="panel kanban-column">
+                    <h2>{col.label} <span className="kanban-count">{columnTickets.length}</span></h2>
+                    <TicketList tickets={columnTickets} showSender onSelect={setSelectedId} />
+                  </div>
+                );
+              })}
+            </div>
+          </>
         )}
       </main>
     </>

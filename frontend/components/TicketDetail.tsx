@@ -121,14 +121,7 @@ export function TicketDetail({
     <div className={themeClass}>
       <a href="#" className="back-link" onClick={(e) => { e.preventDefault(); onBack(); }}>&larr; Back</a>
 
-      <div className={`alert-banner ${BANNER_CLASS[transmission.alertLevel]}`} style={{ marginTop: 16 }}>
-        <span>{BANNER_LABEL[transmission.alertLevel]}</span>
-        <button type="button" className="mute-toggle" onClick={toggleMute}>
-          {muted ? '🔇 Muted' : '🔊 Sound On'}
-        </button>
-      </div>
-
-      <div className="detail-grid">
+      <div className="detail-grid" style={{ marginTop: 16 }}>
         <div className="panel" style={{ marginBottom: 0 }}>
           <p className="ticket-meta">
             {new Date(transmission.createdAt).toLocaleString()} · STATUS: {transmission.status.replace('_', ' ')}
@@ -174,7 +167,15 @@ export function TicketDetail({
           </select>
         </div>
 
-        <aside className="panel sidebar" style={{ marginBottom: 0 }}>
+        <aside className="sidebar">
+          <div className={`alert-banner alert-banner-compact ${BANNER_CLASS[transmission.alertLevel]}`}>
+            <span>{BANNER_LABEL[transmission.alertLevel]}</span>
+            <button type="button" className="mute-toggle" onClick={toggleMute}>
+              {muted ? '🔇' : '🔊'}
+            </button>
+          </div>
+
+          <div className="panel sidebar-panel" style={{ marginBottom: 0 }}>
           <div className="sidebar-section">
             <div className="sidebar-label">Sender (Login)</div>
             <div className="sidebar-value">{transmission.sender?.email || 'unknown'}</div>
@@ -238,6 +239,7 @@ export function TicketDetail({
               />
               <button type="button" className="ghost" onClick={handleAddTag}>Add</button>
             </div>
+          </div>
           </div>
         </aside>
       </div>
