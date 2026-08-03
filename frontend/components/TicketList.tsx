@@ -23,14 +23,14 @@ export function TicketList({
           onClick={() => onSelect?.(t.id)}
           style={{ cursor: onSelect ? 'pointer' : 'default' }}
         >
-          <div>
+          <div className="ticket-info">
             <div className="ticket-subject">{t.subject}</div>
             <div className="ticket-meta">
               {showSender && t.sender ? `${t.sender.email} · ` : ''}
               {new Date(t.createdAt).toLocaleDateString()}
             </div>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <div className="ticket-indicators">
             <SignalIndicator level={t.alertLevel || 'BLUE_ALERT'} />
             <span className="status-tag">{(t.status || 'UNKNOWN').replace('_', ' ')}</span>
           </div>

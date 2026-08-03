@@ -6,6 +6,8 @@ import { Api, Transmission, AlertLevel, TransmissionStatus } from '@/lib/api';
 import { LoginForm } from '@/components/LoginForm';
 import { TicketList } from '@/components/TicketList';
 import { TicketDetail } from '@/components/TicketDetail';
+import { CharacterBanner } from '@/components/CharacterBanner';
+import { OFFICER_DIALOGUE } from '@/lib/dialogue';
 
 const URGENCY_ORDER: Record<AlertLevel, number> = {
   RED_ALERT: 0,
@@ -47,6 +49,28 @@ export default function OfficerDeck() {
 
   if (!ready) return null;
 
+  const selectedTicket = selectedId ? tickets.find((t) => t.id === selectedId) : null;
+  let scene: keyof typeof OFFICER_DIALOGUE = 'login';
+  let sceneKey = 'officer-login';
+  if (loggedIn) {
+    if (selectedId) {
+      if (selectedTicket?.status === 'RESOLVED') {
+        scene = 'resolved';
+        sceneKey = `officer-resolved-${selectedId}`;
+      } else {
+        const level = selectedTicket?.alertLevel || 'BLUE_ALERT';
+        scene = level === 'RED_ALERT' ? 'red' : level === 'YELLOW_ALERT' ? 'yellow' : 'blue';
+        sceneKey = `officer-${scene}-${selectedId}`;
+      }
+    } else {
+      // No dedicated dialogue set specified yet for "board overview, nothing open" —
+      // reusing the login lines as a placeholder. Swap OFFICER_DIALOGUE.login for a
+      // new key here once you have lines for this state.
+      scene = 'login';
+      sceneKey = 'officer-board';
+    }
+  }
+
   return (
     <>
       <header className="station-header">
@@ -57,6 +81,14 @@ export default function OfficerDeck() {
       </header>
 
       <main>
+        <CharacterBanner
+          imageSrc="/images/officer-banner.png"
+          imageAlt="Commanding officer"
+          lines={OFFICER_DIALOGUE[scene]}
+          sceneKey={sceneKey}
+          aspectRatio="1575 / 480"
+        />
+
         {!loggedIn ? (
           <LoginForm variant="officer" onLogin={login} />
         ) : selectedId ? (

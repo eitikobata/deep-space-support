@@ -40,6 +40,7 @@ export function TicketDetail({
   const [responseBody, setResponseBody] = useState('');
   const [newTag, setNewTag] = useState('');
   const [loading, setLoading] = useState(true);
+  const [actionError, setActionError] = useState('');
   const playedForId = useRef<string | null>(null);
 
   const load = useCallback(async () => {
@@ -69,19 +70,34 @@ export function TicketDetail({
 
   async function handleRespond() {
     if (!responseBody.trim()) return;
-    await Api.respondToTransmission(id, responseBody.trim());
-    setResponseBody('');
-    load();
+    setActionError('');
+    try {
+      await Api.respondToTransmission(id, responseBody.trim());
+      setResponseBody('');
+      load();
+    } catch (err) {
+      setActionError(err instanceof Error ? err.message : 'Could not submit response.');
+    }
   }
 
   async function handleStatusChange(status: TransmissionStatus) {
-    await Api.updateTransmission(id, { status });
-    load();
+    setActionError('');
+    try {
+      await Api.updateTransmission(id, { status });
+      load();
+    } catch (err) {
+      setActionError(err instanceof Error ? err.message : 'Could not update status.');
+    }
   }
 
   async function handleAlertLevelChange(alertLevel: AlertLevel) {
-    await Api.updateTransmission(id, { alertLevel });
-    load();
+    setActionError('');
+    try {
+      await Api.updateTransmission(id, { alertLevel });
+      load();
+    } catch (err) {
+      setActionError(err instanceof Error ? err.message : 'Could not update alert level.');
+    }
   }
 
   async function handleAddTag() {
@@ -92,16 +108,26 @@ export function TicketDetail({
       setNewTag('');
       return;
     }
-    await Api.updateTransmission(id, { tagNames: [...currentNames, name] });
-    setNewTag('');
-    load();
+    setActionError('');
+    try {
+      await Api.updateTransmission(id, { tagNames: [...currentNames, name] });
+      setNewTag('');
+      load();
+    } catch (err) {
+      setActionError(err instanceof Error ? err.message : 'Could not add tag.');
+    }
   }
 
   async function handleRemoveTag(name: string) {
     if (!transmission) return;
     const currentNames = (transmission.tags || []).map((t) => t.name);
-    await Api.updateTransmission(id, { tagNames: currentNames.filter((n) => n !== name) });
-    load();
+    setActionError('');
+    try {
+      await Api.updateTransmission(id, { tagNames: currentNames.filter((n) => n !== name) });
+      load();
+    } catch (err) {
+      setActionError(err instanceof Error ? err.message : 'Could not remove tag.');
+    }
   }
 
   if (loading || !transmission) {
@@ -123,6 +149,7 @@ export function TicketDetail({
 
       <div className="detail-grid" style={{ marginTop: 16 }}>
         <div className="panel" style={{ marginBottom: 0 }}>
+          {actionError && <p className="error-text" style={{ marginTop: 0, marginBottom: 12 }}>{actionError}</p>}
           <p className="ticket-meta">
             {new Date(transmission.createdAt).toLocaleString()} · STATUS: {transmission.status.replace('_', ' ')}
           </p>

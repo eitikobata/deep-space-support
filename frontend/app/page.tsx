@@ -6,6 +6,8 @@ import { Api, Transmission } from '@/lib/api';
 import { LoginForm } from '@/components/LoginForm';
 import { TicketList } from '@/components/TicketList';
 import { CrewTicketDetail } from '@/components/CrewTicketDetail';
+import { CharacterBanner } from '@/components/CharacterBanner';
+import { CREW_DIALOGUE } from '@/lib/dialogue';
 
 export default function CrewPortal() {
   const { loggedIn, ready, login, logout } = useAuth();
@@ -55,6 +57,24 @@ export default function CrewPortal() {
 
   if (!ready) return null;
 
+  const selectedTicket = selectedId ? tickets.find((t) => t.id === selectedId) : null;
+  let scene: keyof typeof CREW_DIALOGUE = 'login';
+  let sceneKey = 'crew-login';
+  if (loggedIn) {
+    if (selectedId) {
+      if (selectedTicket?.status === 'RESOLVED') {
+        scene = 'resolved';
+        sceneKey = `crew-resolved-${selectedId}`;
+      } else {
+        scene = 'viewing';
+        sceneKey = `crew-viewing-${selectedId}`;
+      }
+    } else {
+      scene = 'create';
+      sceneKey = 'crew-create';
+    }
+  }
+
   return (
     <>
       <header className="station-header">
@@ -65,6 +85,14 @@ export default function CrewPortal() {
       </header>
 
       <main>
+        <CharacterBanner
+          imageSrc="/images/crew-banner.png"
+          imageAlt="Crew liaison"
+          lines={CREW_DIALOGUE[scene]}
+          sceneKey={sceneKey}
+          aspectRatio="1575 / 480"
+        />
+
         {!loggedIn ? (
           <LoginForm variant="crew" onLogin={login} />
         ) : selectedId ? (

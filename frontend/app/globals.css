@@ -165,6 +165,7 @@ button:disabled { opacity: 0.5; cursor: not-allowed; }
   height: 14px;
   border-radius: 2px;
   vertical-align: middle;
+  flex-shrink: 0;
 }
 
 .signal-rect.blue_alert   { background: var(--cyan);   animation: pulse-rect 3s ease-in-out infinite; }
@@ -192,6 +193,9 @@ button:disabled { opacity: 0.5; cursor: not-allowed; }
 
 .ticket:last-child { border-bottom: none; }
 
+.ticket-info { flex: 1 1 auto; min-width: 0; }
+.ticket-indicators { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+
 .ticket-subject { font-size: 14px; color: var(--text); }
 .ticket-meta { font-family: var(--mono); font-size: 11px; color: var(--text-dim); }
 
@@ -204,6 +208,8 @@ button:disabled { opacity: 0.5; cursor: not-allowed; }
   border-radius: 2px;
   border: 1px solid var(--border);
   color: var(--text-dim);
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
 .empty-state {
@@ -381,4 +387,60 @@ main:has(.kanban-board) { max-width: 1100px; }
   color: var(--text-dim);
   font-size: 11px;
   margin-left: 6px;
+}
+
+/* ============================================
+   Character banners + speech bubble
+   ============================================ */
+
+.character-banner {
+  position: relative;
+  width: 100%;
+  border-radius: 6px;
+  overflow: hidden;
+  margin-bottom: 20px;
+  border: 1px solid var(--border);
+  background: var(--panel);
+}
+.character-banner img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.speech-bubble {
+  position: absolute;
+  left: 4%;
+  top: 50%;
+  transform: translateY(-50%);
+  max-width: 44%;
+  background: rgba(10, 14, 20, 0.88);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px 18px;
+  font-family: var(--mono);
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text);
+}
+.speech-bubble::after {
+  content: '';
+  position: absolute;
+  right: -8px;
+  top: 50%;
+  transform: translateY(-50%);
+  border-width: 8px 0 8px 8px;
+  border-style: solid;
+  border-color: transparent transparent transparent rgba(10, 14, 20, 0.88);
+}
+
+.speech-bubble-fade { animation: speech-fade-in 0.4s ease; }
+@keyframes speech-fade-in {
+  from { opacity: 0; transform: translateY(-50%) translateX(-4px); }
+  to { opacity: 1; transform: translateY(-50%) translateX(0); }
+}
+
+@media (max-width: 640px) {
+  .speech-bubble { max-width: 60%; font-size: 11px; padding: 10px 12px; }
 }

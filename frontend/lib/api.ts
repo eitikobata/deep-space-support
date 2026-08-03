@@ -40,6 +40,8 @@ export interface Transmission {
   logEntries?: LogEntry[];
 }
 
+export const AUTH_EVENT = 'dss-auth-changed';
+
 function getToken(): string | null {
   if (typeof window === 'undefined') return null;
   return localStorage.getItem('dss_token');
@@ -48,6 +50,7 @@ function getToken(): string | null {
 function clearSession() {
   localStorage.removeItem('dss_token');
   localStorage.removeItem('dss_user');
+  window.dispatchEvent(new Event(AUTH_EVENT));
 }
 
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
@@ -63,8 +66,7 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
 
   if (res.status === 401) {
     clearSession();
-    window.location.reload();
-    throw new Error('Session expired');
+    throw new Error('Session expired. Please log in again.');
   }
   if (!res.ok) {
     const body = await res.json().catch(() => null);
@@ -87,6 +89,7 @@ export const Api = {
     });
     localStorage.setItem('dss_token', data.access_token);
     localStorage.setItem('dss_user', JSON.stringify(data.user));
+    window.dispatchEvent(new Event(AUTH_EVENT));
     return data;
   },
 
