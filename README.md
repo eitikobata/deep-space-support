@@ -1,62 +1,145 @@
 # Deep Space Support
 
-A ticketing/help-desk system themed as a space station's internal communications desk, built as a portfolio piece demonstrating authentication, role-based authorization, AI-powered triage automation, and API design.
+An internal help-desk system for a space station's crew — built as a portfolio piece demonstrating real authentication, role-based authorization, AI-assisted automation, and full-stack TypeScript engineering, with the actual decision-making trail left visible instead of cleaned up after the fact.
+
+**Live demo:** Crew Portal → `/` · Officer Deck → `/officer`
+Both login screens have an **Auto-fill Demo Credentials** button — no signup needed to explore. (See [note on that](#a-note-on-the-demo-login-button) below — it's a deliberate trade-off, not an oversight.)
+
+---
 
 ## Concept
 
-Deep Space Support is an internal service desk — closer to Jira/ServiceNow than a public help center like Zendesk. Crew members ("Crew" role) submit transmissions (tickets) about issues aboard the station; duty officers ("Officer" role) triage, respond, and resolve them. Login is required for both roles because the scenario is internal crew communication, not anonymous public complaints (unlike the sibling project, Kingdom's Complaints Office / Correio das Reclamações, which is intentionally anonymous).
+Deep Space Support is an *internal* service desk — closer to Jira or ServiceNow than a public contact form. Crew members file **transmissions** (tickets) about issues aboard the station; duty **Officers** triage, respond, and resolve them.
 
-## Domain model
+This is deliberately **authenticated**, not anonymous — unlike its sibling portfolio project, Kingdom's Complaints Office, which is intentionally anonymous (a citizen's public complaint). On a ship, every transmission is logged against whoever sent it, and that one constraint shaped everything downstream: real login, real role separation, real per-user data isolation.
 
-- **Transmission** (ticket): `subject`, `description`, `alertLevel`, `status`, `sender` (Crew who filed it), `tags`, `logEntries`
-- **Alert levels**: `BLUE_ALERT` (routine, default) → `YELLOW_ALERT` (moderate) → `RED_ALERT` (safety-critical/urgent)
-- **Status**: `ACTIVE` → `UNDER_REVIEW` → `RESOLVED`
-- **Tags**: free-form categories (e.g. `mechanical_failure`, `first_contact`, `crew_dispute`, `supply_shortage`, `navigation_error`, `unidentified_signal`), assigned automatically by AI triage
-- **LogEntry**: an Officer's response to a Transmission
-- **Roles**: `CREW` (files and reads own transmissions only), `OFFICER` (reads/updates all transmissions, writes log entries)
+| Concept | Meaning |
+|---|---|
+| **Transmission** | A ticket: subject, description, alert level, status, sender, tags, log entries |
+| **Alert level** | `BLUE_ALERT` (routine) → `YELLOW_ALERT` (moderate) → `RED_ALERT` (critical) — classified automatically by an AI triage step |
+| **Status** | `ACTIVE` → `UNDER_REVIEW` → `RESOLVED` |
+| **Log entry** | An Officer's logged response to a transmission |
+| **Roles** | `CREW` (files and reads own transmissions only) · `OFFICER` (reads/updates all transmissions, writes log entries) |
 
-## Tech stack (current)
+---
 
-- **Backend**: NestJS + Prisma + PostgreSQL, JWT auth (Passport), layered architecture (Controller → Service → Prisma), role-based Guards, DTO validation via class-validator
-- **Frontend**: Next.js (App Router, TypeScript), two portals — `/` for Crew, `/officer` for Officer — sharing a retro sci-fi panel design system (dark navy panels, cyan/amber accents, JetBrains Mono + Inter, animated "signal strength" alert indicator)
-- **Automation**: n8n workflow — webhook receives new transmission → fetches tag list → Gemini (gemini-flash-lite-latest) classifies `alertLevel` + `tags` from subject/description → updates the transmission via API → optionally emails the sender (Resend SMTP) with a fallback if no email is available
-- **Infra**: self-hosted on a Hostinger VPS (8GB RAM) via EasyPanel/Docker, shared PostgreSQL instance per project database
+## Stack
 
-## Why not Supabase or Directus (decision history)
+| Layer | Choice |
+|---|---|
+| Backend | NestJS + Prisma + PostgreSQL |
+| Auth | JWT (Passport), bcrypt password hashing |
+| Frontend | Next.js (App Router, TypeScript, static export) |
+| Automation | n8n — Gemini-based AI triage, transactional email via Resend |
+| Testing | Jest on both sides — `RolesGuard`/service tests on the backend, sort-logic/API/component tests on the frontend |
+| Infra | Self-hosted on a Hostinger VPS via EasyPanel/Docker, shared Postgres instance |
 
-1. **Supabase Cloud** was considered first but dropped early — the free-tier payment verification requirement was a blocker.
-2. **Directus (self-hosted)** was built out fully — schema, RLS-equivalent Access Policies, n8n integration, a working Next.js frontend — but produced an extended, genuinely anomalous debugging saga across two sessions:
-   - Field Presets (`$CURRENT_USER`) only apply within the Directus Studio UI form, **not** when items are created via external API calls — this caused the `sender` field to silently stay null when created from the custom frontend. Fixed via the field-level "On Create → Save Current User ID" option instead.
-   - Directus returns `204 No Content` (not the created object) on POST when it can't confirm read-back permissions in the same request — broke code that destructured the response body.
-   - A rebuilt-from-scratch Access Policy with **All Access** on every field/item permission still returned `403 Forbidden` for a specific field update, with no configuration difference found across four separate UI panels (Item Permissions, Field Permissions, Field Validation, Field Presets) and no change after multiple container restarts — this was never resolved and is suspected to be a genuine bug or corrupted internal state in that Directus instance.
-   - Multiple instances of Access Policies silently detaching from their Role despite appearing correctly configured when viewed in isolation.
-3. **Decision**: abandon Directus, rebuild the backend as a hand-written NestJS API. This trades "configure a black-box permission engine" for "write and read the actual authorization code" — slower to build, but debuggable, testable, and a stronger portfolio artifact (demonstrates layered architecture, DTOs, guards, and includes unit tests, which director-level and junior SWE job postings alike explicitly value).
+### Why this stack, specifically
 
-## Career context
+**Backend: NestJS over Express.** Express is still the most common Node framework and the safer default for a quick take-home test. But this project was built to target two hiring tracks at once — Automation Engineer / CX Ops roles, and Junior/Graduate Software Engineer roles at product companies. The latter increasingly expects TypeScript fluency, layered architecture, and automated tests, not just "the API works." NestJS was chosen to demonstrate that layer of engineering discipline (controller → service → DTO → guard) — a deliberate choice to prioritize employability over personal comfort with a stack that had previously been a point of friction.
 
-This project is being built as a flagship portfolio piece, not scoped narrowly to one job category. The person building it (see person-level context) is targeting a mix of: Automation Engineer / CX Ops / Support Ops roles (where Directus/n8n/API integration skills mattered most) **and** general Junior/Graduate Software Engineer roles at product companies (where TypeScript, tests, layered backend architecture, and Node.js fluency matter more). The NestJS rewrite was deliberately chosen to maximize employability across both tracks, prioritizing what recruiters/tech leads evaluate over minimizing personal friction with TypeScript (which had previously been a pain point from an earlier bootcamp experience with heavily-abstracted layered architectures).
+**Authorization lives in code, not in a config UI.** A `RolesGuard` + `@Roles('OFFICER')` decorator is plain TypeScript, unit-testable, and reviewable in a diff. This is the single biggest lesson carried over from an earlier, abandoned attempt at this same project — see below.
 
-## Current status
+---
 
-- ✅ Backend: all 33 files scaffolded (auth, transmissions, log-entries, tags modules; Prisma schema with blue/yellow/red alert levels; one example unit test)
-- ✅ Frontend: fully built for Directus, needs its `lib/directus.ts` (or equivalent) rewired to call the new NestJS API instead
-- ✅ n8n triage workflow: built and working against Directus, needs its Directus-specific nodes (Get Available Tags, Update Transmission) repointed to the new API
-- ⏳ Not yet done: install backend deps, run first Prisma migration, deploy backend to EasyPanel, rewire frontend API client, rewire n8n nodes, redeploy/retest end-to-end
+## Decision history: three backends before this one
 
-## Repo structure
+<details>
+<summary><strong>Click to expand — why Supabase and Directus were tried and abandoned first</strong></summary>
+
+### 1. Supabase Cloud — abandoned in minutes
+Considered first: Postgres + Auth + auto-generated REST API, zero backend code. Blocked immediately by the free tier requiring a credit card. Never got past setup.
+
+### 2. Directus (self-hosted) — the long, instructive detour
+Directus is a headless CMS/backend-admin layer on Postgres, self-hosted alongside this project's other services. This phase produced a genuinely unusual run of bugs — most silent, several contradicting their own configuration UI:
+
+- **Field Presets don't apply outside the Directus Studio form.** A preset like `{"sender": "$CURRENT_USER"}` only fires when an item is created *through the admin UI* — not through an external API call, which is exactly how a real frontend creates data. `sender` silently stayed `null` on every transmission created by the actual app, quietly breaking any permission rule depending on it. The real fix lived elsewhere: a field-level "On Create → Save Current User ID" option operating at the database layer.
+- **`204 No Content` instead of the created object** on `POST`, when Directus can't confirm read-back permission within the same request — broke code that destructured the response body directly.
+- **A rebuilt-from-scratch Access Policy with total "All Access" on every permission still returned `403 Forbidden`** for an automation account trying to update one field, with no configuration difference visible across four separate permission panels, and no change after multiple full container restarts. Verified in isolation via raw `curl`/PowerShell to eliminate other variables — identical error. Never resolved. This is the bug that ended the Directus attempt.
+- Smaller but real issues along the way: CORS variables reverting after redeploy, Access Policies silently detaching from their Role despite looking correctly configured in isolation, `/users/me` requiring its own explicit read permission.
+
+The pattern that finally forced the decision: *configuration that is visually and structurally correct still silently fails, with no error message pointing at a cause, surviving container restarts.* Not a debuggable state for something meant to run unattended.
+
+### 3. NestJS + Prisma — the deliberate choice
+Trades "configure a permission engine you can't fully inspect" for "write and read the actual authorization code." Slower to build from scratch, but every rule (*Crew can only see their own transmissions*, *only Officer can update alertLevel*) is a line of TypeScript in a `.service.ts` file, covered by a unit test, reviewable in a pull request.
+
+</details>
+
+---
+
+## Architecture
 
 ```
 deep-space/
-├── backend/     (NestJS + Prisma — see file list below)
-└── frontend/    (Next.js — App Router, portals at / and /officer)
+├── backend/     NestJS + Prisma — REST API, JWT auth, RBAC
+└── frontend/    Next.js — two portals, / and /officer
 ```
 
-## Next steps (in order)
+### Backend
 
-1. `npm install` in `backend/`, create real `.env`, run `npx prisma migrate dev --name init`
-2. Test auth locally (`/auth/signup`, `/auth/login`) via curl/Postman
-3. Deploy `backend/` to EasyPanel (new Postgres database, new Node service, Dockerfile build)
-4. Rewrite the frontend's API client to call the new backend instead of Directus
-5. Rewrite the two Directus-dependent n8n nodes to call the new backend's endpoints
-6. Full end-to-end retest: Crew creates transmission → n8n triages → Officer responds → status updates
-7. Build the self-healing demo-data reset workflow (scheduled n8n job resetting demo Crew/Officer tickets) for recruiter-facing access
+Layered NestJS architecture (`Controller → Service → Prisma`), `class-validator` DTOs at the boundary, `Guard`s for auth/role enforcement.
+
+- **Auth** — signup/login, bcrypt hashing, JWT (`JWT_EXPIRES_IN=7d`, no refresh flow by design — this is a demo, not a system needing long-lived sessions).
+- **Transmissions** — `JwtAuthGuard` + `RolesGuard` on the controller; `@Roles('OFFICER')` restricts status/alert-level updates. `GET /transmissions` is *role-aware, not role-gated*: Crew and Officer hit the same endpoint, and the service scopes the result set by `senderId` for Crew, or returns everything for Officer.
+- **Log entries** — Officer-only creation. After saving a response, fires a fire-and-forget webhook to n8n if the transmission has a `notifyEmail` on file, so the crew member gets emailed when their ticket is answered. A failure here never fails the actual API response.
+- **Tags** — public read endpoint, called by both the frontend and the unauthenticated leg of the n8n triage workflow.
+- **Tests** — `RolesGuard` (all three branches: no metadata, allowed role, blocked role) and `TransmissionsService` (creation, field mapping, `notifyEmail` persistence).
+
+### Frontend
+
+Next.js App Router, static export (the whole app is client components hitting the API directly — no server-side Next.js features in use, so `output: 'export'` is the correct build target, not a workaround).
+
+- **`/` — Crew Portal.** File a transmission, browse own tickets in a 3-column board (Active / Under Review / Resolved), open a read-only ticket view.
+- **`/officer` — Officer Deck.** Same 3-column board across *all* tickets, red-alert-first within each column. Opening a ticket shows a themed detail view (background tint, pulsing alert banner, a short audio cue per alert level with a persistent mute toggle) and a sidebar for status/alert-level control and tag editing.
+- **Character banners** on both portals, with a rotating speech-bubble line pulled from a per-scene dialogue set — same pattern used across this author's other portfolio projects.
+- **Tests** — Jest + React Testing Library: pure sort-logic, `Api` client session handling (login persistence, 401 recovery), and component behavior (`LoginForm`, `TicketList`).
+
+### Automation (n8n)
+
+Three independent workflows:
+
+1. **Transmission triage** — `Webhook → Officer service-account login → Get Available Tags → Gemini classification → Update Transmission → conditional email`. The model is asked for raw JSON; a small parsing step strips markdown fences and falls back safely if the response is malformed, so one bad completion never breaks the pipeline.
+2. **Response notification** — fired by the backend itself when an Officer logs a reply, so it fires regardless of which client submitted the response.
+3. **Self-heal reset** — scheduled workflow that wipes and reseeds ~20 fixed demo transmissions (mixed severity, mixed status, some with officer responses, a couple closed without one) on a timer, so the public demo never degrades.
+
+---
+
+## Local development
+
+```bash
+# Backend
+cd backend
+npm install
+npx prisma generate
+npx prisma migrate dev
+npm run start:dev       # http://localhost:3001
+npm test                # Jest — RolesGuard + TransmissionsService
+
+# Frontend
+cd frontend
+npm install
+npm run dev              # http://localhost:3000
+npm test                 # Jest — sort logic, Api client, components
+```
+
+---
+
+## Deployment notes
+
+Both services run as separate EasyPanel apps on the same VPS, sharing one Postgres instance with a dedicated database per project.
+
+- **Backend** ships as a multi-stage Docker build. Notably includes `apk add openssl` in *both* build and runtime stages — Prisma's musl-target query engine needs a real OpenSSL present to detect its own version, which slim Alpine images don't ship by default. Without it, the container builds fine and then crashes on boot with a `PrismaClientInitializationError`.
+- **Frontend** is a static export served via `serve`, not `next start` (which doesn't work with `output: 'export'`).
+
+---
+
+## A note on the demo login button
+
+The Auto-fill Demo Credentials button ships real login/password pairs in the client-side bundle — a pattern that would be a genuine problem on any system holding real user data. Here, it's a conscious trade-off: these accounts only ever touch fictional tickets, and the self-heal workflow resets all of it hourly regardless. Making a recruiter type credentials by hand to evaluate a portfolio project costs more than the theoretical risk is worth. This isn't a pattern to ship anywhere real data is at stake — and being able to say that clearly is part of the point.
+
+---
+
+## What's next
+
+- A dedicated dialogue set for the Officer Deck's board-overview state (currently reuses the login lines)
+- Broader frontend test coverage, if this project keeps growing

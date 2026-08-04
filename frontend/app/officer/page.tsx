@@ -2,32 +2,19 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/hooks/useAuth';
-import { Api, Transmission, AlertLevel, TransmissionStatus } from '@/lib/api';
+import { Api, Transmission, TransmissionStatus } from '@/lib/api';
+import { sortByUrgency } from '@/lib/sort';
 import { LoginForm } from '@/components/LoginForm';
 import { TicketList } from '@/components/TicketList';
 import { TicketDetail } from '@/components/TicketDetail';
 import { CharacterBanner } from '@/components/CharacterBanner';
 import { OFFICER_DIALOGUE } from '@/lib/dialogue';
 
-const URGENCY_ORDER: Record<AlertLevel, number> = {
-  RED_ALERT: 0,
-  YELLOW_ALERT: 1,
-  BLUE_ALERT: 2,
-};
-
 const COLUMNS: { status: TransmissionStatus; label: string }[] = [
   { status: 'ACTIVE', label: 'Active' },
   { status: 'UNDER_REVIEW', label: 'Under Review' },
   { status: 'RESOLVED', label: 'Resolved' },
 ];
-
-function sortByUrgency(tickets: Transmission[]) {
-  return [...tickets].sort((a, b) => {
-    const urgencyDiff = URGENCY_ORDER[a.alertLevel] - URGENCY_ORDER[b.alertLevel];
-    if (urgencyDiff !== 0) return urgencyDiff;
-    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-  });
-}
 
 export default function OfficerDeck() {
   const { loggedIn, ready, login, logout } = useAuth();
@@ -63,6 +50,9 @@ export default function OfficerDeck() {
         sceneKey = `officer-${scene}-${selectedId}`;
       }
     } else {
+      // No dedicated dialogue set specified yet for "board overview, nothing open" —
+      // reusing the login lines as a placeholder. Swap OFFICER_DIALOGUE.login for a
+      // new key here once you have lines for this state.
       scene = 'login';
       sceneKey = 'officer-board';
     }

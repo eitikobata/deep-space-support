@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { Api, Transmission, TransmissionStatus } from '@/lib/api';
+import { sortNewestFirst } from '@/lib/sort';
 import { LoginForm } from '@/components/LoginForm';
 import { TicketList } from '@/components/TicketList';
 import { CrewTicketDetail } from '@/components/CrewTicketDetail';
@@ -14,10 +15,6 @@ const COLUMNS: { status: TransmissionStatus; label: string }[] = [
   { status: 'UNDER_REVIEW', label: 'Under Review' },
   { status: 'RESOLVED', label: 'Resolved' },
 ];
-
-function sortNewestFirst(tickets: Transmission[]) {
-  return [...tickets].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-}
 
 export default function CrewPortal() {
   const { loggedIn, ready, login, logout } = useAuth();
