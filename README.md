@@ -141,5 +141,4 @@ The Auto-fill Demo Credentials button ships real login/password pairs in the cli
 
 ## What's next
 
-- A dedicated dialogue set for the Officer Deck's board-overview state (currently reuses the login lines)
 - Broader frontend test coverage, if this project keeps growing
