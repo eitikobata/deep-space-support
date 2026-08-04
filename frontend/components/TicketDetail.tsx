@@ -43,8 +43,8 @@ export function TicketDetail({
   const [actionError, setActionError] = useState('');
   const playedForId = useRef<string | null>(null);
 
-  const load = useCallback(async () => {
-    setLoading(true);
+  const load = useCallback(async (showLoading = true) => {
+    if (showLoading) setLoading(true);
     const t = await Api.getTransmission(id);
     setTransmission(t);
     setLoading(false);
@@ -54,18 +54,13 @@ export function TicketDetail({
     load();
   }, [load]);
 
-  // Play the alert cue exactly once per ticket opened — not on every
-  // re-fetch triggered by status/tag/alert-level edits on the same ticket.
   useEffect(() => {
     if (!transmission || muted) return;
     if (playedForId.current === transmission.id) return;
     playedForId.current = transmission.id;
     const audio = new Audio(AUDIO_SRC[transmission.alertLevel]);
     audio.volume = 0.5;
-    audio.play().catch(() => {
-      // Autoplay can be blocked by the browser until the user interacts with
-      // the page at least once — safe to ignore, it's a nice-to-have cue.
-    });
+    audio.play().catch(() => {});
   }, [transmission, muted]);
 
   async function handleRespond() {
@@ -74,7 +69,7 @@ export function TicketDetail({
     try {
       await Api.respondToTransmission(id, responseBody.trim());
       setResponseBody('');
-      load();
+      load(false);
     } catch (err) {
       setActionError(err instanceof Error ? err.message : 'Could not submit response.');
     }
@@ -84,7 +79,7 @@ export function TicketDetail({
     setActionError('');
     try {
       await Api.updateTransmission(id, { status });
-      load();
+      load(false);
     } catch (err) {
       setActionError(err instanceof Error ? err.message : 'Could not update status.');
     }
@@ -94,7 +89,7 @@ export function TicketDetail({
     setActionError('');
     try {
       await Api.updateTransmission(id, { alertLevel });
-      load();
+      load(false);
     } catch (err) {
       setActionError(err instanceof Error ? err.message : 'Could not update alert level.');
     }
@@ -112,7 +107,7 @@ export function TicketDetail({
     try {
       await Api.updateTransmission(id, { tagNames: [...currentNames, name] });
       setNewTag('');
-      load();
+      load(false);
     } catch (err) {
       setActionError(err instanceof Error ? err.message : 'Could not add tag.');
     }
@@ -124,7 +119,7 @@ export function TicketDetail({
     setActionError('');
     try {
       await Api.updateTransmission(id, { tagNames: currentNames.filter((n) => n !== name) });
-      load();
+      load(false);
     } catch (err) {
       setActionError(err instanceof Error ? err.message : 'Could not remove tag.');
     }

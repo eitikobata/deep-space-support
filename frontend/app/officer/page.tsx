@@ -63,9 +63,6 @@ export default function OfficerDeck() {
         sceneKey = `officer-${scene}-${selectedId}`;
       }
     } else {
-      // No dedicated dialogue set specified yet for "board overview, nothing open" —
-      // reusing the login lines as a placeholder. Swap OFFICER_DIALOGUE.login for a
-      // new key here once you have lines for this state.
       scene = 'login';
       sceneKey = 'officer-board';
     }
@@ -80,15 +77,15 @@ export default function OfficerDeck() {
         )}
       </header>
 
-      <main>
-        <CharacterBanner
-          imageSrc="/images/officer-banner.png"
-          imageAlt="Commanding officer"
-          lines={OFFICER_DIALOGUE[scene]}
-          sceneKey={sceneKey}
-          aspectRatio="1575 / 480"
-        />
+      <CharacterBanner
+        imageSrc="/images/officer-banner.png"
+        imageAlt="Commanding officer"
+        lines={OFFICER_DIALOGUE[scene]}
+        sceneKey={sceneKey}
+        aspectRatio="2400 / 380"
+      />
 
+      <main>
         {!loggedIn ? (
           <LoginForm variant="officer" onLogin={login} />
         ) : selectedId ? (

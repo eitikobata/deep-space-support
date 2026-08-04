@@ -2,12 +2,22 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/hooks/useAuth';
-import { Api, Transmission } from '@/lib/api';
+import { Api, Transmission, TransmissionStatus } from '@/lib/api';
 import { LoginForm } from '@/components/LoginForm';
 import { TicketList } from '@/components/TicketList';
 import { CrewTicketDetail } from '@/components/CrewTicketDetail';
 import { CharacterBanner } from '@/components/CharacterBanner';
 import { CREW_DIALOGUE } from '@/lib/dialogue';
+
+const COLUMNS: { status: TransmissionStatus; label: string }[] = [
+  { status: 'ACTIVE', label: 'Active' },
+  { status: 'UNDER_REVIEW', label: 'Under Review' },
+  { status: 'RESOLVED', label: 'Resolved' },
+];
+
+function sortNewestFirst(tickets: Transmission[]) {
+  return [...tickets].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+}
 
 export default function CrewPortal() {
   const { loggedIn, ready, login, logout } = useAuth();
@@ -84,15 +94,15 @@ export default function CrewPortal() {
         )}
       </header>
 
-      <main>
-        <CharacterBanner
-          imageSrc="/images/crew-banner.png"
-          imageAlt="Crew liaison"
-          lines={CREW_DIALOGUE[scene]}
-          sceneKey={sceneKey}
-          aspectRatio="1575 / 480"
-        />
+      <CharacterBanner
+        imageSrc="/images/crew-banner.png"
+        imageAlt="Crew liaison"
+        lines={CREW_DIALOGUE[scene]}
+        sceneKey={sceneKey}
+        aspectRatio="2400 / 380"
+      />
 
+      <main>
         {!loggedIn ? (
           <LoginForm variant="crew" onLogin={login} />
         ) : selectedId ? (
@@ -136,9 +146,16 @@ export default function CrewPortal() {
               {error && <p className="error-text">{error}</p>}
             </div>
 
-            <div className="panel">
-              <h2>Your Transmissions</h2>
-              <TicketList tickets={tickets} onSelect={setSelectedId} />
+            <div className="kanban-board">
+              {COLUMNS.map((col) => {
+                const columnTickets = sortNewestFirst(tickets.filter((t) => t.status === col.status));
+                return (
+                  <div key={col.status} className="panel kanban-column">
+                    <h2>{col.label} <span className="kanban-count">{columnTickets.length}</span></h2>
+                    <TicketList tickets={columnTickets} onSelect={setSelectedId} />
+                  </div>
+                );
+              })}
             </div>
           </>
         )}
