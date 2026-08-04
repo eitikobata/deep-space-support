@@ -2,7 +2,9 @@
 
 An internal help-desk system for a space station's crew — built as a portfolio piece demonstrating real authentication, role-based authorization, AI-assisted automation, and full-stack TypeScript engineering, with the actual decision-making trail left visible instead of cleaned up after the fact.
 
-**Live demo:** Crew Portal → `[Crew Station](https://deepspace.eitikobata.com/)` · Officer Deck → `[Officer Deck](https://deepspace.eitikobata.com/officer)`
+**Live demo:
+**Crew Portal:** [Crew Station](https://eitikobata.com)
+**Officer Deck:** [Officer Deck](https://eitikobata.comofficer)
 Both login screens have an **Auto-fill Demo Credentials** button — no signup needed to explore. (See [note on that](#a-note-on-the-demo-login-button) below — it's a deliberate trade-off, not an oversight.)
 
 ---
